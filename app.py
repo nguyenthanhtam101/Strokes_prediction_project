@@ -6,56 +6,58 @@ import xgboost as xgb
 import shap
 import matplotlib.pyplot as plt
 import os
-import io # Thư viện io để xử lý encoding
-from PIL import Image # --- THÊM MỚI: Để xử lý ảnh
-import tensorflow as tf # --- THÊM MỚI: Để tải và xử lý model .h5
+import io 
+from PIL import Image 
+import tensorflow as tf 
 from tensorflow.keras.models import load_model
+from huggingface_hub import hf_hub_download 
 
 # --- 1. CẤU HÌNH TRANG VÀ TẢI MÔ HÌNH ---
 
 st.set_page_config( page_title="Hệ Thống Dự Đoán Đột Quỵ", page_icon="🧠", layout="wide")
 
-# --- Các đường dẫn file (THÊM MODEL C) ---
-MODEL_PATH = "models/"
-MODEL_A_FILENAME = "model_A_final.json"; SCALER_A_FILENAME = "scaler_A_final.pkl"
-COLS_A_FILENAME = "columns_A_final.pkl"; MODEL_B_FILENAME = "model_B_final.json"
-SCALER_B_FILENAME = "scaler_B_final.pkl"; COLS_B_FILENAME = "columns_B_final.pkl"
-X_TRAIN_SAMPLE_FILENAME = "X_train_sample_scaled.pkl"
-MODEL_C_FILENAME = "model_C_final.h5" # --- THÊM MỚI: Tên file model ảnh
+# --- THAY ĐỔI: Định nghĩa tên repo HF và tên file ---
+HF_REPO_ID = "tam43621/stroke-prediction-models" 
+MODEL_A_FILENAME = "models/model_A_final.json"; SCALER_A_FILENAME = "models/scaler_A_final.pkl"
+COLS_A_FILENAME = "models/columns_A_final.pkl"; MODEL_B_FILENAME = "models/model_B_final.json"
+SCALER_B_FILENAME = "models/scaler_B_final.pkl"; COLS_B_FILENAME = "models/columns_B_final.pkl"
+X_TRAIN_SAMPLE_FILENAME = "models/X_train_sample_scaled.pkl"
+MODEL_C_FILENAME = "models/model_C_final.h5" 
 
-# --- CẬP NHẬT: Hàm tải model (Thêm Model C) ---
 @st.cache_resource
 def load_models_and_data():
-    """Tải 3 model, scaler, cột và mẫu dữ liệu huấn luyện cho SHAP."""
-    model_files = {
-        "model_A": MODEL_PATH + MODEL_A_FILENAME, "scaler_A": MODEL_PATH + SCALER_A_FILENAME,
-        "cols_A": MODEL_PATH + COLS_A_FILENAME, "model_B": MODEL_PATH + MODEL_B_FILENAME,
-        "scaler_B": MODEL_PATH + SCALER_B_FILENAME, "cols_B": MODEL_PATH + COLS_B_FILENAME,
-        "train_sample": MODEL_PATH + X_TRAIN_SAMPLE_FILENAME,
-        "model_C": MODEL_PATH + MODEL_C_FILENAME # --- THÊM MỚI
-    }
-    missing_files = [path for path in model_files.values() if not os.path.exists(path)]
-    if missing_files: st.error(f"Lỗi: Không tìm thấy file: {', '.join(missing_files)}. "); return None
+    """Tải 3 model, scaler, cột từ Hugging Face Hub."""
     try:
-        model_a = xgb.XGBClassifier(); model_a.load_model(model_files["model_A"])
-        model_b = xgb.XGBClassifier(); model_b.load_model(model_files["model_B"])
-        model_c = load_model(model_files["model_C"]) # --- THÊM MỚI: Tải model Keras
-        
-        train_sample_scaled = joblib.load(model_files["train_sample"])
-        cols_a = joblib.load(model_files["cols_A"]); cols_b = joblib.load(model_files["cols_B"])
-        
+        # --- THAY ĐỔI: Tải từng file từ Hugging Face ---
+        model_a_path = hf_hub_download(repo_id=HF_REPO_ID, filename=MODEL_A_FILENAME)
+        model_b_path = hf_hub_download(repo_id=HF_REPO_ID, filename=MODEL_B_FILENAME)
+        model_c_path = hf_hub_download(repo_id=HF_REPO_ID, filename=MODEL_C_FILENAME)
+        scaler_a_path = hf_hub_download(repo_id=HF_REPO_ID, filename=SCALER_A_FILENAME)
+        scaler_b_path = hf_hub_download(repo_id=HF_REPO_ID, filename=SCALER_B_FILENAME)
+        cols_a_path = hf_hub_download(repo_id=HF_REPO_ID, filename=COLS_A_FILENAME)
+        cols_b_path = hf_hub_download(repo_id=HF_REPO_ID, filename=COLS_B_FILENAME)
+        train_sample_path = hf_hub_download(repo_id=HF_REPO_ID, filename=X_TRAIN_SAMPLE_FILENAME)
+
+        # Tải model từ các file đã tải về
+        model_a = xgb.XGBClassifier(); model_a.load_model(model_a_path)
+        model_b = xgb.XGBClassifier(); model_b.load_model(model_b_path)
+        model_c = load_model(model_c_path)
+
+        train_sample_scaled = joblib.load(train_sample_path)
+        cols_a = joblib.load(cols_a_path); cols_b = joblib.load(cols_b_path)
+
         if not isinstance(train_sample_scaled, pd.DataFrame): train_sample_scaled = pd.DataFrame(train_sample_scaled, columns=cols_a)
         elif list(train_sample_scaled.columns) != list(cols_a): train_sample_scaled.columns = cols_a
-        
+
         models_data = {
-            "model_A": model_a, "scaler_A": joblib.load(model_files["scaler_A"]), "cols_A": cols_a,
-            "model_B": model_b, "scaler_B": joblib.load(model_files["scaler_B"]), "cols_B": cols_b,
-            "model_C": model_c, # --- THÊM MỚI
+            "model_A": model_a, "scaler_A": joblib.load(scaler_a_path), "cols_A": cols_a,
+            "model_B": model_b, "scaler_B": joblib.load(scaler_b_path), "cols_B": cols_b,
+            "model_C": model_c,
             "train_sample_scaled": train_sample_scaled
         }
-        print("Đã tải 3 model và dữ liệu mẫu thành công.")
+        print("Đã tải 3 model và dữ liệu mẫu từ Hugging Face thành công.")
         return models_data
-    except Exception as e: st.error(f"Lỗi khi tải model: {e}"); st.exception(e); return None
+    except Exception as e: st.error(f"Lỗi khi tải model từ Hugging Face: {e}"); st.exception(e); return None
 
 models_data = load_models_and_data()
 if models_data is None: st.warning("Không tải được model."); st.stop()
