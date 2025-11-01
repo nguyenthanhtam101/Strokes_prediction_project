@@ -9,4 +9,3 @@ matplotlib
 tensorflow
 Pillow
 openpyxl
-huggingface-hub
