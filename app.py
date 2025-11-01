@@ -18,7 +18,6 @@ st.set_page_config( page_title="Hệ Thống Dự Đoán Đột Quỵ", page_ico
 
 # --- THAY ĐỔI: Định nghĩa tên repo HF và tên file ---
 HF_REPO_ID = "tam43621/stroke-prediction-models" 
-HF_REPO_ID = "tam43621/stroke-prediction-models" 
 MODEL_A_FILENAME = "model_A_final.json" 
 SCALER_A_FILENAME = "scaler_A_final.pkl" 
 COLS_A_FILENAME = "columns_A_final.pkl" 
