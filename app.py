@@ -18,14 +18,11 @@ st.set_page_config( page_title="Hệ Thống Dự Đoán Đột Quỵ", page_ico
 
 # --- THAY ĐỔI: Định nghĩa tên repo HF và tên file ---
 HF_REPO_ID = "tam43621/stroke-prediction-models" 
-MODEL_A_FILENAME = "model_A_final.json" 
-SCALER_A_FILENAME = "scaler_A_final.pkl" 
-COLS_A_FILENAME = "columns_A_final.pkl" 
-MODEL_B_FILENAME = "model_B_final.json" 
-SCALER_B_FILENAME = "scaler_B_final.pkl" 
-COLS_B_FILENAME = "columns_B_final.pkl" 
-X_TRAIN_SAMPLE_FILENAME = "X_train_sample_scaled.pkl" 
-MODEL_C_FILENAME = "model2_C_resnet.h5"
+MODEL_A_FILENAME = "models/model_A_final.json"; SCALER_A_FILENAME = "models/scaler_A_final.pkl"
+COLS_A_FILENAME = "models/columns_A_final.pkl"; MODEL_B_FILENAME = "models/model_B_final.json"
+SCALER_B_FILENAME = "models/scaler_B_final.pkl"; COLS_B_FILENAME = "models/columns_B_final.pkl"
+X_TRAIN_SAMPLE_FILENAME = "models/X_train_sample_scaled.pkl"
+MODEL_C_FILENAME = "models/model2_C_resnet.h5" 
 
 @st.cache_resource
 def load_models_and_data():
