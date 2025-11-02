@@ -10,8 +10,9 @@ import io
 from PIL import Image 
 import tensorflow as tf 
 from tensorflow.keras.models import load_model
-from huggingface_hub import hf_hub_download
-import tensorflow_hub as hub
+from huggingface_hub import hf_hub_download 
+import tensorflow_hub as hub 
+from tensorflow.keras.utils import custom_object_scope # <-- THÊM DÒNG NÀY
 
 # --- 1. CẤU HÌNH TRANG VÀ TẢI MÔ HÌNH ---
 
@@ -47,13 +48,11 @@ def load_models_and_data():
         model_a = xgb.XGBClassifier(); model_a.load_model(model_a_path)
         model_b = xgb.XGBClassifier(); model_b.load_model(model_b_path)
         
-        # --- SỬA LỖI MODEL C ---
+        # --- SỬA LỖI MODEL C (Dùng custom_object_scope) ---
         # Báo cho Keras biết về các lớp của TensorFlow Hub
-        custom_objects = {"KerasLayer": hub.KerasLayer}
-        
-        # Tải model_c với custom_objects VÀ compile=False
-        # compile=False là an toàn vì chúng ta chỉ dự đoán (inference)
-        model_c = load_model(model_c_path, custom_objects=custom_objects, compile=False)
+        # Chúng ta dùng 'with' (context manager) thay vì truyền dict
+        with custom_object_scope({'KerasLayer': hub.KerasLayer}):
+             model_c = load_model(model_c_path, compile=False)
         # --- KẾT THÚC SỬA LỖI ---
         
         train_sample_scaled = joblib.load(train_sample_path)
