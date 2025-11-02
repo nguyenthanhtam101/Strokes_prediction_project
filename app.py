@@ -11,11 +11,11 @@ from PIL import Image
 import tensorflow as tf 
 from tensorflow.keras.models import load_model
 from huggingface_hub import hf_hub_download 
-import tensorflow_hub as hub # <-- Dòng 1
-from tensorflow.keras.utils import custom_object_scope # <-- Dòng 2
-import gdown # <-- Dòng 3
+import tensorflow_hub as hub
+from tensorflow.keras.utils import custom_object_scope
+import gdown
 
-# ... (Giữ nguyên các dòng HF_REPO_ID và FILENAMES cho A, B) ...
+
 HF_REPO_ID = "tam43621/stroke-predict" 
 MODEL_PATH = "models/" 
 MODEL_A_FILENAME = MODEL_PATH + "model_A_final.json"
@@ -26,14 +26,14 @@ SCALER_B_FILENAME = MODEL_PATH + "scaler_B_final.pkl"
 COLS_B_FILENAME = MODEL_PATH + "columns_B_final.pkl"
 X_TRAIN_SAMPLE_FILENAME = MODEL_PATH + "X_train_sample_scaled.pkl"
 
-# --- THAY ĐỔI: Thêm ID của Google Drive ---
-MODEL_C_GDRIVE_ID = "1ZQZtOQ1LelQMUO75g2gs0PXoliOPDueX" # <-- DÁN File ID (ở Bước 1) CỦA BẠN VÀO ĐÂY
+# Thay bằng ID file Google Drive của bạn
+MODEL_C_GDRIVE_ID = "1ZQZtOQ1LelQMUO75g2gs0PXoliOPDueX"  
 
 @st.cache_resource
 def load_models_and_data():
     """Tải 3 model, scaler, cột (A,B từ HF; C từ GDrive)."""
     try:
-        # Tải A & B từ Hugging Face
+        # Tải model A, B và scaler, cột từ Hugging Face
         model_a_path = hf_hub_download(repo_id=HF_REPO_ID, filename=MODEL_A_FILENAME)
         model_b_path = hf_hub_download(repo_id=HF_REPO_ID, filename=MODEL_B_FILENAME)
         scaler_a_path = hf_hub_download(repo_id=HF_REPO_ID, filename=SCALER_A_FILENAME)
@@ -42,24 +42,31 @@ def load_models_and_data():
         cols_b_path = hf_hub_download(repo_id=HF_REPO_ID, filename=COLS_B_FILENAME)
         train_sample_path = hf_hub_download(repo_id=HF_REPO_ID, filename=X_TRAIN_SAMPLE_FILENAME)
 
-        # Tải Model C từ Google Drive
+        # Đường dẫn lưu model C tải từ Google Drive
         model_c_output_path = "model_c_from_drive.h5"
-        gdown.download(id=MODEL_C_GDRIVE_ID, output=model_c_output_path, quiet=False)
+        
+        # Nếu chưa có file model C, tải xuống
+        if not os.path.exists(model_c_output_path):
+            gdown.download(id=MODEL_C_GDRIVE_ID, output=model_c_output_path, quiet=False)
 
-        # Tải model A và B
-        model_a = xgb.XGBClassifier(); model_a.load_model(model_a_path)
-        model_b = xgb.XGBClassifier(); model_b.load_model(model_b_path)
+        # Load model A và B
+        model_a = xgb.XGBClassifier()
+        model_a.load_model(model_a_path)
+        model_b = xgb.XGBClassifier()
+        model_b.load_model(model_b_path)
 
-        # --- SỬA LỖI MODEL C (Dùng custom_object_scope) ---
+        # Load model C với custom_object_scope nếu có custom layer
         with custom_object_scope({'KerasLayer': hub.KerasLayer}):
-             model_c = load_model(model_c_output_path, compile=False)
-        # --- KẾT THÚC SỬA LỖI ---
+            model_c = load_model(model_c_output_path, compile=False)
 
         train_sample_scaled = joblib.load(train_sample_path)
-        cols_a = joblib.load(cols_a_path); cols_b = joblib.load(cols_b_path)
+        cols_a = joblib.load(cols_a_path)
+        cols_b = joblib.load(cols_b_path)
 
-        if not isinstance(train_sample_scaled, pd.DataFrame): train_sample_scaled = pd.DataFrame(train_sample_scaled, columns=cols_a)
-        elif list(train_sample_scaled.columns) != list(cols_a): train_sample_scaled.columns = cols_a
+        if not isinstance(train_sample_scaled, pd.DataFrame):
+            train_sample_scaled = pd.DataFrame(train_sample_scaled, columns=cols_a)
+        elif list(train_sample_scaled.columns) != list(cols_a):
+            train_sample_scaled.columns = cols_a
 
         models_data = {
             "model_A": model_a, "scaler_A": joblib.load(scaler_a_path), "cols_A": cols_a,
@@ -69,7 +76,12 @@ def load_models_and_data():
         }
         print("Đã tải 3 model (A,B từ HF; C từ GDrive) thành công.")
         return models_data
-    except Exception as e: st.error(f"Lỗi khi tải model: {e}"); st.exception(e); return None
+
+    except Exception as e:
+        st.error(f"Lỗi khi tải model: {e}")
+        st.exception(e)
+        return None
+
 
 models_data = load_models_and_data()
 if models_data is None: st.warning("Không tải được model."); st.stop()
