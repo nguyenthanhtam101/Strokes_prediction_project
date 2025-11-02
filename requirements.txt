@@ -1,4 +1,10 @@
-streamlit
+# Yeu cau Streamlit dung Python 3.11 (an toan cho TensorFlow)
+python == 3.11
+
+# Pin phien ban Keras 2 / TensorFlow 2.15 (rat on dinh)
+tensorflow == 2.15.0
+tensorflow-hub == 0.16.1
+treamlit
 pandas
 numpy
 scikit-learn
@@ -6,9 +12,6 @@ xgboost
 joblib
 shap
 matplotlib
-tensorflow
 Pillow
 openpyxl
 huggingface-hub
-tensorflow-hub
-gdown
