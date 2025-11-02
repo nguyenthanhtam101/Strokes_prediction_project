@@ -51,7 +51,7 @@ def load_models_and_data():
         # --- SỬA LỖI MODEL C (Dùng custom_object_scope) ---
         # Báo cho Keras biết về các lớp của TensorFlow Hub
         with custom_object_scope({'KerasLayer': hub.KerasLayer}):
-             model_c = load_model(model_c_path, compile=False)
+            model_c = load_model(model_c_path, compile=False)
         # --- KẾT THÚC SỬA LỖI ---
 
         train_sample_scaled = joblib.load(train_sample_path)
