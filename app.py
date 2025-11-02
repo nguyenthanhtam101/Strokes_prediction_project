@@ -50,7 +50,14 @@ def load_models_and_data():
 
         # --- SỬA LỖI MODEL C (Dùng custom_object_scope) ---
         # Báo cho Keras biết về các lớp của TensorFlow Hub
-        with custom_object_scope({'KerasLayer': hub.KerasLayer}):
+        from tensorflow.keras.layers import Layer
+
+        class GetItem(Layer):
+            def __init__(self, **kwargs):
+                super().__init__(**kwargs)
+            def call(self, inputs):
+                return inputs  # hoặc logic thực sự nếu bạn dùng slice
+        with custom_object_scope({'KerasLayer': hub.KerasLayer, 'GetItem': GetItem}):
             model_c = load_model(model_c_path, compile=False)
         # --- KẾT THÚC SỬA LỖI ---
 
