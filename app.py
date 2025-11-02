@@ -7,20 +7,19 @@ import shap
 import matplotlib.pyplot as plt
 import os
 import io 
-from PIL import Image 
-import tensorflow as tf 
+from PIL import Image
+import tensorflow as tf
 from tensorflow.keras.models import load_model
-from huggingface_hub import hf_hub_download 
-import tensorflow_hub as hub # <-- Dòng 1
-from tensorflow.keras.utils import custom_object_scope # <-- Dòng 2
+from huggingface_hub import hf_hub_download
+import tensorflow_hub as hub
+from tensorflow.keras.utils import custom_object_scope
 
 # --- 1. CẤU HÌNH TRANG VÀ TẢI MÔ HÌNH ---
 
-st.set_page_config( page_title="Hệ Thống Dự Đoán Đột Quỵ", page_icon="🧠", layout="wide")
+st.set_page_config(page_title="Hệ Thống Dự Đoán Đột Quỵ", page_icon="🧠", layout="wide")
 
-# (Giữ nguyên các dòng HF_REPO_ID và FILENAME...)
-HF_REPO_ID = "tam43621/stroke-predict" 
-MODEL_PATH = "models/" 
+HF_REPO_ID = "tam43621/stroke-predict"
+MODEL_PATH = "models/"
 MODEL_A_FILENAME = MODEL_PATH + "model_A_final.json"
 SCALER_A_FILENAME = MODEL_PATH + "scaler_A_final.pkl"
 COLS_A_FILENAME = MODEL_PATH + "columns_A_final.pkl"
@@ -28,7 +27,7 @@ MODEL_B_FILENAME = MODEL_PATH + "model_B_final.json"
 SCALER_B_FILENAME = MODEL_PATH + "scaler_B_final.pkl"
 COLS_B_FILENAME = MODEL_PATH + "columns_B_final.pkl"
 X_TRAIN_SAMPLE_FILENAME = MODEL_PATH + "X_train_sample_scaled.pkl"
-MODEL_C_FILENAME = MODEL_PATH + "model2_C_resnet.h5" 
+MODEL_C_FILENAME = MODEL_PATH + "model2_C_resnet.h5"
 
 @st.cache_resource
 def load_models_and_data():
@@ -48,18 +47,18 @@ def load_models_and_data():
         model_a = xgb.XGBClassifier(); model_a.load_model(model_a_path)
         model_b = xgb.XGBClassifier(); model_b.load_model(model_b_path)
 
-        # --- SỬA LỖI MODEL C (Dùng custom_object_scope) ---
-        # Báo cho Keras biết về các lớp của TensorFlow Hub
+        # --- FIX LỖI LAYER (Custom Layer) CHO MODEL C ---
         from tensorflow.keras.layers import Layer
 
         class GetItem(Layer):
             def __init__(self, **kwargs):
                 super().__init__(**kwargs)
             def call(self, inputs):
-                return inputs  # hoặc logic thực sự nếu bạn dùng slice
+                return inputs # Thay thế logic này nếu thực tế cần slice
+
         with custom_object_scope({'KerasLayer': hub.KerasLayer, 'GetItem': GetItem}):
             model_c = load_model(model_c_path, compile=False)
-        # --- KẾT THÚC SỬA LỖI ---
+        # --- END FIX ---
 
         train_sample_scaled = joblib.load(train_sample_path)
         cols_a = joblib.load(cols_a_path); cols_b = joblib.load(cols_b_path)
@@ -75,7 +74,11 @@ def load_models_and_data():
         }
         print("Đã tải 3 model và dữ liệu mẫu từ Hugging Face thành công.")
         return models_data
-    except Exception as e: st.error(f"Lỗi khi tải model từ Hugging Face: {e}"); st.exception(e); return None
+    except Exception as e:
+        st.error(f"Lỗi khi tải model từ Hugging Face: {e}")
+        st.exception(e)
+        return None
+
 
 models_data = load_models_and_data()
 if models_data is None: st.warning("Không tải được model."); st.stop()
