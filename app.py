@@ -395,36 +395,40 @@ with tab_image:
                     # 1. Đọc và tiền xử lý ảnh
                     image = Image.open(img_file).convert('RGB')
                     
-                    # 2. Resize về kích thước model C được huấn luyện (Giả định 224x224)
-                    # Hãy thay đổi IMG_SIZE ở đầu file nếu model của bạn dùng kích thước khác
+                    # 2. Resize
                     image_resized = image.resize(IMG_SIZE) 
                     
-                    # 3. Chuẩn hóa (Giả định chuẩn hóa về [0, 1])
+                    # 3. Chuẩn hóa
                     img_array = np.array(image_resized)
                     img_array_normalized = img_array / 255.0 
                     
-                    # 4. Tạo batch (1, 224, 224, 3)
+                    # 4. Tạo batch
                     img_batch = np.expand_dims(img_array_normalized, axis=0)
 
                     # 5. Dự đoán
                     prediction = model_C.predict(img_batch)
-                    prob = prediction[0][0] # Lấy xác suất từ neuron output
+                    prob_numpy = prediction[0][0] # Đây là kiểu numpy.float32
+
+                    # --- SỬA LỖI: Chuyển đổi sang float chuẩn của Python ---
+                    prob = float(prob_numpy)
+                    # --- KẾT THÚC SỬA LỖI ---
 
                     st.subheader("Kết quả Phân tích Hình ảnh:")
                     
-                    # QUAN TRỌNG: Dựa trên code cũ của bạn:
+                    # (Giữ nguyên logic cũ)
                     # Lớp 0: Hemorrhagic
                     # Lớp 1: NORMAL
-                    # Model (binary) dự đoán xác suất của Lớp 1 (NORMAL)
                     
                     if prob > 0.5:
                         st.success(f"**Kết luận: NORMAL (Bình thường)**")
-                        st.progress(prob)
+                        st.progress(prob) # <-- Đã sửa (bây giờ là float chuẩn)
                         st.write(f"Độ chắc chắn (Normal): {prob*100:.2f}%")
                     else:
                         st.error(f"**Kết luận: HEMORRHAGIC (Chảy máu)**")
-                        st.progress(1.0 - prob)
-                        st.write(f"Độ chắc chắn (Hemorrhagic): {(1-prob)*100:.2f}%")
+                        # Tính toán giá trị float chuẩn
+                        prob_hemorrhagic = 1.0 - prob
+                        st.progress(prob_hemorrhagic) # <-- Đã sửa (bây giờ là float chuẩn)
+                        st.write(f"Độ chắc chắn (Hemorrhagic): {prob_hemorrhagic*100:.2f}%")
                         st.warning("Cảnh báo: Phát hiện dấu hiệu chảy máu. Cần xem xét y tế ngay lập tức.")
 
                 except Exception as e:
