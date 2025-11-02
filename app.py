@@ -24,7 +24,7 @@ MODEL_B_FILENAME = MODEL_PATH + "model_B_final.json"
 SCALER_B_FILENAME = MODEL_PATH + "scaler_B_final.pkl"
 COLS_B_FILENAME = MODEL_PATH + "columns_B_final.pkl"
 X_TRAIN_SAMPLE_FILENAME = MODEL_PATH + "X_train_sample_scaled.pkl"
-MODEL_C_FILENAME = MODEL_PATH + "model2_C_resnet.h5" # <-- Đảm bảo tên này ĐÚNG
+MODEL_C_FILENAME = MODEL_PATH + "model2_C_resnet.h5" 
 
 @st.cache_resource
 def load_models_and_data():
