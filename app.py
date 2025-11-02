@@ -14,6 +14,7 @@ from huggingface_hub import hf_hub_download
 import tensorflow_hub as hub
 from tensorflow.keras.utils import custom_object_scope
 
+
 # --- 1. CẤU HÌNH TRANG VÀ TẢI MÔ HÌNH ---
 
 st.set_page_config(page_title="Hệ Thống Dự Đoán Đột Quỵ", page_icon="🧠", layout="wide")
@@ -57,6 +58,7 @@ def load_models_and_data():
                 return inputs # Thay thế logic này nếu thực tế cần slice
 
         with custom_object_scope({'KerasLayer': hub.KerasLayer, 'GetItem': GetItem}):
+            model_c_path = hf_hub_download(repo_id=HF_REPO_ID, filename=MODEL_C_FILENAME)
             model_c = load_model(model_c_path, compile=False)
         # --- END FIX ---
 
