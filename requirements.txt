@@ -1,5 +1,4 @@
 # Pin (ghim) phiên bản Keras 2 (ổn định)
-# Streamlit sẽ tự động tìm Python 3.11 để cài đặt TF 2.15
 tensorflow == 2.15.0
 tensorflow-hub == 0.16.1
 
