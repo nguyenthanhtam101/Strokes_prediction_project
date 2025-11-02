@@ -11,14 +11,15 @@ from PIL import Image
 import tensorflow as tf 
 from tensorflow.keras.models import load_model
 from huggingface_hub import hf_hub_download
+import tensorflow_hub as hub
 
 # --- 1. CẤU HÌNH TRANG VÀ TẢI MÔ HÌNH ---
 
 st.set_page_config( page_title="Hệ Thống Dự Đoán Đột Quỵ", page_icon="🧠", layout="wide")
 
-# --- THAY ĐỔI: Đây là các đường dẫn CỤC BỘ (local) ---
+# (Giữ nguyên các dòng HF_REPO_ID và FILENAME...)
 HF_REPO_ID = "tam43621/stroke-predict" 
-MODEL_PATH = "models/" # <-- Thư mục con TRÊN HF
+MODEL_PATH = "models/" 
 MODEL_A_FILENAME = MODEL_PATH + "model_A_final.json"
 SCALER_A_FILENAME = MODEL_PATH + "scaler_A_final.pkl"
 COLS_A_FILENAME = MODEL_PATH + "columns_A_final.pkl"
@@ -26,7 +27,7 @@ MODEL_B_FILENAME = MODEL_PATH + "model_B_final.json"
 SCALER_B_FILENAME = MODEL_PATH + "scaler_B_final.pkl"
 COLS_B_FILENAME = MODEL_PATH + "columns_B_final.pkl"
 X_TRAIN_SAMPLE_FILENAME = MODEL_PATH + "X_train_sample_scaled.pkl"
-MODEL_C_FILENAME = MODEL_PATH + "model2_C_resnet.h5" # <-- Đảm bảo tên này ĐÚNG
+MODEL_C_FILENAME = MODEL_PATH + "model2_C_resnet.h5" 
 
 @st.cache_resource
 def load_models_and_data():
@@ -42,14 +43,22 @@ def load_models_and_data():
         cols_b_path = hf_hub_download(repo_id=HF_REPO_ID, filename=COLS_B_FILENAME)
         train_sample_path = hf_hub_download(repo_id=HF_REPO_ID, filename=X_TRAIN_SAMPLE_FILENAME)
 
-        # Tải model từ các file đã tải về
+        # Tải model A và B
         model_a = xgb.XGBClassifier(); model_a.load_model(model_a_path)
         model_b = xgb.XGBClassifier(); model_b.load_model(model_b_path)
-        model_c = load_model(model_c_path)
-
+        
+        # --- SỬA LỖI MODEL C ---
+        # Báo cho Keras biết về các lớp của TensorFlow Hub
+        custom_objects = {"KerasLayer": hub.KerasLayer}
+        
+        # Tải model_c với custom_objects VÀ compile=False
+        # compile=False là an toàn vì chúng ta chỉ dự đoán (inference)
+        model_c = load_model(model_c_path, custom_objects=custom_objects, compile=False)
+        # --- KẾT THÚC SỬA LỖI ---
+        
         train_sample_scaled = joblib.load(train_sample_path)
         cols_a = joblib.load(cols_a_path); cols_b = joblib.load(cols_b_path)
-
+        
         if not isinstance(train_sample_scaled, pd.DataFrame): train_sample_scaled = pd.DataFrame(train_sample_scaled, columns=cols_a)
         elif list(train_sample_scaled.columns) != list(cols_a): train_sample_scaled.columns = cols_a
 

@@ -10,3 +10,4 @@ tensorflow
 Pillow
 openpyxl
 huggingface-hub
+tensorflow-hub
