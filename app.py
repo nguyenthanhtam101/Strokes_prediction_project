@@ -13,9 +13,13 @@ from tensorflow.keras.models import load_model
 from huggingface_hub import hf_hub_download 
 import tensorflow_hub as hub # <-- Dòng 1
 from tensorflow.keras.utils import custom_object_scope # <-- Dòng 2
-import gdown # <-- Dòng 3
+# Bỏ import gdown (nếu bạn không dùng GDrive nữa)
 
-# ... (Giữ nguyên các dòng HF_REPO_ID và FILENAMES cho A, B) ...
+# --- 1. CẤU HÌNH TRANG VÀ TẢI MÔ HÌNH ---
+
+st.set_page_config( page_title="Hệ Thống Dự Đoán Đột Quỵ", page_icon="🧠", layout="wide")
+
+# (Đảm bảo các dòng này CHÍNH XÁC)
 HF_REPO_ID = "tam43621/stroke-predict" 
 MODEL_PATH = "models/" 
 MODEL_A_FILENAME = MODEL_PATH + "model_A_final.json"
@@ -26,34 +30,32 @@ SCALER_B_FILENAME = MODEL_PATH + "scaler_B_final.pkl"
 COLS_B_FILENAME = MODEL_PATH + "columns_B_final.pkl"
 X_TRAIN_SAMPLE_FILENAME = MODEL_PATH + "X_train_sample_scaled.pkl"
 
-# --- THAY ĐỔI: Thêm ID của Google Drive ---
-# !! HÃY THAY ID CỦA BẠN VÀO ĐÂY !!
-MODEL_C_GDRIVE_ID = "1WWhrbPrRZyy6H71XE6rb8FUyzHFJoCw8" 
+# --- THAY ĐỔI: Sử dụng file .keras mới của bạn ---
+MODEL_C_FILENAME = MODEL_PATH + "model2_C_resnet.keras"
 
 @st.cache_resource
 def load_models_and_data():
-    """Tải 3 model, scaler, cột (A,B từ HF; C từ GDrive)."""
+    """Tải 3 model, scaler, cột từ Hugging Face Hub."""
     try:
-        # Tải A & B từ Hugging Face
+        # Tải A & B & C từ Hugging Face
         model_a_path = hf_hub_download(repo_id=HF_REPO_ID, filename=MODEL_A_FILENAME)
         model_b_path = hf_hub_download(repo_id=HF_REPO_ID, filename=MODEL_B_FILENAME)
+        model_c_path = hf_hub_download(repo_id=HF_REPO_ID, filename=MODEL_C_FILENAME) # <-- Tải file .keras
+
         scaler_a_path = hf_hub_download(repo_id=HF_REPO_ID, filename=SCALER_A_FILENAME)
         scaler_b_path = hf_hub_download(repo_id=HF_REPO_ID, filename=SCALER_B_FILENAME)
         cols_a_path = hf_hub_download(repo_id=HF_REPO_ID, filename=COLS_A_FILENAME)
         cols_b_path = hf_hub_download(repo_id=HF_REPO_ID, filename=COLS_B_FILENAME)
         train_sample_path = hf_hub_download(repo_id=HF_REPO_ID, filename=X_TRAIN_SAMPLE_FILENAME)
 
-        # Tải Model C từ Google Drive
-        model_c_output_path = "model_c_from_drive.h5"
-        gdown.download(id=MODEL_C_GDRIVE_ID, output=model_c_output_path, quiet=False)
-
         # Tải model A và B
         model_a = xgb.XGBClassifier(); model_a.load_model(model_a_path)
         model_b = xgb.XGBClassifier(); model_b.load_model(model_b_path)
 
         # --- SỬA LỖI MODEL C (Dùng custom_object_scope) ---
+        # (Chúng ta vẫn giữ lại để đảm bảo an toàn, dù file .keras có thể không cần)
         with custom_object_scope({'KerasLayer': hub.KerasLayer}):
-             model_c = load_model(model_c_output_path, compile=False)
+             model_c = load_model(model_c_path, compile=False)
         # --- KẾT THÚC SỬA LỖI ---
 
         train_sample_scaled = joblib.load(train_sample_path)
@@ -68,9 +70,9 @@ def load_models_and_data():
             "model_C": model_c,
             "train_sample_scaled": train_sample_scaled
         }
-        print("Đã tải 3 model (A,B từ HF; C từ GDrive) thành công.")
+        print("Đã tải 3 model từ Hugging Face thành công.")
         return models_data
-    except Exception as e: st.error(f"Lỗi khi tải model: {e}"); st.exception(e); return None
+    except Exception as e: st.error(f"Lỗi khi tải model từ Hugging Face: {e}"); st.exception(e); return None
 
 
 models_data = load_models_and_data()
