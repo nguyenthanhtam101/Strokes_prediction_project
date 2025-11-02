@@ -11,3 +11,4 @@ Pillow
 openpyxl
 huggingface-hub
 tensorflow-hub
+gdown
