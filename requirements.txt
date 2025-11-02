@@ -1,10 +1,12 @@
-# Yeu cau Streamlit dung Python 3.11 (an toan cho TensorFlow)
+# Bắt buộc Streamlit dùng Python 3.11
 python == 3.11
 
-# Pin phien ban Keras 2 / TensorFlow 2.15 (rat on dinh)
+# Pin (ghim) phiên bản Keras 2 (ổn định)
 tensorflow == 2.15.0
 tensorflow-hub == 0.16.1
-treamlit
+
+# Các thư viện còn lại
+streamlit
 pandas
 numpy
 scikit-learn
@@ -15,3 +17,4 @@ matplotlib
 Pillow
 openpyxl
 huggingface-hub
+gdown
