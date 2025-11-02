@@ -28,7 +28,7 @@ X_TRAIN_SAMPLE_FILENAME = MODEL_PATH + "X_train_sample_scaled.pkl"
 
 # --- THAY ĐỔI: Thêm ID của Google Drive ---
 # !! HÃY THAY ID CỦA BẠN VÀO ĐÂY !!
-MODEL_C_GDRIVE_ID = "YOUR_FILE_ID_HERE" 
+MODEL_C_GDRIVE_ID = "1WWhrbPrRZyy6H71XE6rb8FUyzHFJoCw8" 
 
 @st.cache_resource
 def load_models_and_data():
