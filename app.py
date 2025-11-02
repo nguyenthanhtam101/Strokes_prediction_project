@@ -6,35 +6,18 @@ import xgboost as xgb
 import shap
 import matplotlib.pyplot as plt
 import os
-import io
-from PIL import Image
-import tensorflow as tf
+import io 
+from PIL import Image 
+import tensorflow as tf 
 from tensorflow.keras.models import load_model
-from huggingface_hub import hf_hub_download
-import tensorflow_hub as hub
-from tensorflow.keras.utils import custom_object_scope
-from keras.saving import register_keras_serializable
+from huggingface_hub import hf_hub_download 
+import tensorflow_hub as hub # <-- Dòng 1
+from tensorflow.keras.utils import custom_object_scope # <-- Dòng 2
+import gdown # <-- Dòng 3
 
-# ---- ĐĂNG KÝ LỚP CUSTOM LAYER CHUẨN ----
-@register_keras_serializable(package="Custom", name="GetItem")
-class GetItem(tf.keras.layers.Layer):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-    def call(self, inputs):
-        return inputs  # Bạn sửa lại logic nếu thực sự dùng slice
-    def get_config(self):
-        base_config = super().get_config()
-        return base_config
-    @classmethod
-    def from_config(cls, config):
-        return cls(**config)
-
-# --- CẤU HÌNH TRANG ---
-st.set_page_config(page_title="Hệ Thống Dự Đoán Đột Quỵ", page_icon="🧠", layout="wide")
-
-# --- CẤU HÌNH ĐƯỜNG DẪN VÀ FILE ---
-HF_REPO_ID = "tam43621/stroke-predict"
-MODEL_PATH = "models/"
+# ... (Giữ nguyên các dòng HF_REPO_ID và FILENAMES cho A, B) ...
+HF_REPO_ID = "tam43621/stroke-predict" 
+MODEL_PATH = "models/" 
 MODEL_A_FILENAME = MODEL_PATH + "model_A_final.json"
 SCALER_A_FILENAME = MODEL_PATH + "scaler_A_final.pkl"
 COLS_A_FILENAME = MODEL_PATH + "columns_A_final.pkl"
@@ -42,16 +25,16 @@ MODEL_B_FILENAME = MODEL_PATH + "model_B_final.json"
 SCALER_B_FILENAME = MODEL_PATH + "scaler_B_final.pkl"
 COLS_B_FILENAME = MODEL_PATH + "columns_B_final.pkl"
 X_TRAIN_SAMPLE_FILENAME = MODEL_PATH + "X_train_sample_scaled.pkl"
-MODEL_C_FILENAME = MODEL_PATH + "model2_C_resnet.keras"
 
-IMG_SIZE = (224, 224)
-numerical_cols_s = ['age', 'avg_glucose_level', 'bmi']
+# --- THAY ĐỔI: Thêm ID của Google Drive ---
+# !! HÃY THAY ID CỦA BẠN VÀO ĐÂY !!
+MODEL_C_GDRIVE_ID = "YOUR_FILE_ID_HERE" 
 
 @st.cache_resource
 def load_models_and_data():
-    """Tải models & dữ liệu từ Hugging Face Hub."""
+    """Tải 3 model, scaler, cột (A,B từ HF; C từ GDrive)."""
     try:
-        # Tải từ HF Hub
+        # Tải A & B từ Hugging Face
         model_a_path = hf_hub_download(repo_id=HF_REPO_ID, filename=MODEL_A_FILENAME)
         model_b_path = hf_hub_download(repo_id=HF_REPO_ID, filename=MODEL_B_FILENAME)
         scaler_a_path = hf_hub_download(repo_id=HF_REPO_ID, filename=SCALER_A_FILENAME)
@@ -59,46 +42,39 @@ def load_models_and_data():
         cols_a_path = hf_hub_download(repo_id=HF_REPO_ID, filename=COLS_A_FILENAME)
         cols_b_path = hf_hub_download(repo_id=HF_REPO_ID, filename=COLS_B_FILENAME)
         train_sample_path = hf_hub_download(repo_id=HF_REPO_ID, filename=X_TRAIN_SAMPLE_FILENAME)
-        model_c_path = hf_hub_download(repo_id=HF_REPO_ID, filename=MODEL_C_FILENAME)
 
-        # Load model A, B (xgboost)
-        model_a = xgb.XGBClassifier()
-        model_a.load_model(model_a_path)
-        model_b = xgb.XGBClassifier()
-        model_b.load_model(model_b_path)
+        # Tải Model C từ Google Drive
+        model_c_output_path = "model_c_from_drive.h5"
+        gdown.download(id=MODEL_C_GDRIVE_ID, output=model_c_output_path, quiet=False)
 
-        # Load model C với custom_object_scope
-        with custom_object_scope({'KerasLayer': hub.KerasLayer, 'GetItem': GetItem}):
-            model_c = load_model(model_c_path, compile=False)
+        # Tải model A và B
+        model_a = xgb.XGBClassifier(); model_a.load_model(model_a_path)
+        model_b = xgb.XGBClassifier(); model_b.load_model(model_b_path)
+
+        # --- SỬA LỖI MODEL C (Dùng custom_object_scope) ---
+        with custom_object_scope({'KerasLayer': hub.KerasLayer}):
+             model_c = load_model(model_c_output_path, compile=False)
+        # --- KẾT THÚC SỬA LỖI ---
 
         train_sample_scaled = joblib.load(train_sample_path)
-        cols_a = joblib.load(cols_a_path)
-        cols_b = joblib.load(cols_b_path)
+        cols_a = joblib.load(cols_a_path); cols_b = joblib.load(cols_b_path)
 
-        if not isinstance(train_sample_scaled, pd.DataFrame):
-            train_sample_scaled = pd.DataFrame(train_sample_scaled, columns=cols_a)
-        elif list(train_sample_scaled.columns) != list(cols_a):
-            train_sample_scaled.columns = cols_a
+        if not isinstance(train_sample_scaled, pd.DataFrame): train_sample_scaled = pd.DataFrame(train_sample_scaled, columns=cols_a)
+        elif list(train_sample_scaled.columns) != list(cols_a): train_sample_scaled.columns = cols_a
 
         models_data = {
             "model_A": model_a, "scaler_A": joblib.load(scaler_a_path), "cols_A": cols_a,
             "model_B": model_b, "scaler_B": joblib.load(scaler_b_path), "cols_B": cols_b,
-            "model_C": model_c, "train_sample_scaled": train_sample_scaled
+            "model_C": model_c,
+            "train_sample_scaled": train_sample_scaled
         }
-        print("Đã tải 3 model và dữ liệu mẫu từ Hugging Face thành công.")
+        print("Đã tải 3 model (A,B từ HF; C từ GDrive) thành công.")
         return models_data
-    except Exception as e:
-        st.error(f"Lỗi khi tải model: {e}")
-        st.exception(e)
-        return None
+    except Exception as e: st.error(f"Lỗi khi tải model: {e}"); st.exception(e); return None
+
 
 models_data = load_models_and_data()
-if models_data is None:
-    st.warning("Không tải được model."); st.stop()
-
-# ---------- Dưới này giữ nguyên các chức năng business logic, UI, dự báo, SHAP, upload ảnh... ----------
-# Đoạn cod UI, logic cho tabular và image giữ nguyên như các phiên bản bạn đã làm trước.
-
+if models_data is None: st.warning("Không tải được model."); st.stop()
 numerical_cols_s = ['age', 'avg_glucose_level', 'bmi']
 # --- Giả định kích thước ảnh Model C (thay đổi nếu cần) ---
 IMG_SIZE = (224, 224) 
