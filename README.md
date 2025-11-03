@@ -1,6 +1,7 @@
 # 🧠 Dự án Hệ thống Dự đoán Đột quỵ (Strokes Prediction Project)
 
 [![Streamlit App](httpsS::/static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://strokespredictionproject-lycxr4b2tkapp5ytvl2aksc.streamlit.app/#thong-tin-ho-so-suc-khoe)
+* **Notebook Huấn luyện:** [Xem chi tiết trên Google Colab](https://colab.research.google.com/drive/1nmkiLYdhAZvgg7GYAz-h0NQbNBTekZnH?usp=sharing)
 
 ---
 
