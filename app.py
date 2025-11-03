@@ -11,9 +11,8 @@ from PIL import Image
 import tensorflow as tf 
 from tensorflow.keras.models import load_model
 from huggingface_hub import hf_hub_download 
-import tensorflow_hub as hub # <-- Dòng 1
-from tensorflow.keras.utils import custom_object_scope # <-- Dòng 2
-# Bỏ import gdown (nếu bạn không dùng GDrive nữa)
+import tensorflow_hub as hub 
+from tensorflow.keras.utils import custom_object_scope 
 
 # --- 1. CẤU HÌNH TRANG VÀ TẢI MÔ HÌNH ---
 
@@ -125,14 +124,14 @@ def predict_final_risk_v3(patient_health_df, patient_symptoms_df):
 
 # --- 3. GIAO DIỆN ỨNG DỤNG ---
 
-st.title("🧠 Hệ Thống Sàng Lọc & Dự Đoán Đột Quỵ (3 Model)")
+st.title("🧠 Hệ Thống Sàng Lọc & Dự Đoán Đột Quỵ")
 st.markdown("Ứng dụng kết hợp AI (tabular, hình ảnh) và logic y khoa để đánh giá nguy cơ đột quỵ.")
 
 # --- CẬP NHẬT: Thêm Tab 3 cho Model C ---
-tab_names = ["Dành cho Bệnh nhân (Model A+B)", "Dành cho Bác sĩ (Model A+B)", "Chẩn đoán Hình ảnh (Model C)"]
+tab_names = ["Dành cho Bệnh nhân", "Dành cho Bác sĩ", "Chẩn đoán Hình ảnh"]
 tab_patient, tab_doctor, tab_image = st.tabs(tab_names)
 
-# --- TAB DÀNH CHO BỆNH NHÂN (Giữ nguyên) ---
+# --- TAB DÀNH CHO BỆNH NHÂN  ---
 with tab_patient:
     st.header("Công Cụ Tự Đánh Giá Nguy Cơ")
     st.write("Vui lòng cung cấp các thông tin dưới đây để hệ thống phân tích.")
@@ -379,7 +378,7 @@ with tab_doctor:
 
 # --- PHẦN MỚI: TAB DÀNH CHO MODEL C (HÌNH ẢNH) ---
 with tab_image:
-    st.header("Model C: Phân tích Hình ảnh Y khoa (CT Não)")
+    st.header("Phân tích Hình ảnh Y khoa (CT Não)")
     st.info("Tải lên ảnh CT não để mô hình phân tích (Hemorrhagic - Chảy máu vs Normal - Bình thường).")
 
     img_file = st.file_uploader("Tải lên ảnh (jpg, jpeg, png)", type=["jpg", "jpeg", "png"], key="c_uploader")
