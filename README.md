@@ -1,6 +1,6 @@
 # 🧠 Dự án Hệ thống Dự đoán Đột quỵ (Strokes Prediction Project)
 
-[![Streamlit App](https://strokespredictionproject-lycxr4b2tkapp5ytvl2aksc.streamlit.app/#thong-tin-ho-so-suc-khoe) 
+[![Streamlit App](httpsS::/static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://strokespredictionproject-lycxr4b2tkapp5ytvl2aksc.streamlit.app/#thong-tin-ho-so-suc-khoe)
 
 ---
 
